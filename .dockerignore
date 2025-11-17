@@ -1,0 +1,9 @@
+backend/.env
+backend/var/
+backend/vendor
+backend/.git/
+backend/.gitignore
+backend/node_modules
+backend/*.md
+backend/.idea/
+backend/.vscode/

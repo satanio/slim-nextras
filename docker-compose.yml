@@ -1,0 +1,78 @@
+services:
+  nginx:
+    image: slim/nginx
+    build:
+      context: .
+      dockerfile: ./.docker/nginx/Dockerfile
+    depends_on:
+      - backend
+    volumes:
+      - ./backend/public:/var/www/html/public:rw,cached
+    ports:
+      - ${BACKEND_PORT:-8880}:80
+
+
+  backend:
+    image: slim-app/backend
+    build:
+      context: .
+      dockerfile: ./.docker/backend/Dockerfile
+      args:
+        USER: $USER
+    environment:
+      DOCKER: 1
+      DB_HOST: database
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME?}
+      DB_USER: ${DB_USER?}
+      DB_PASSWORD: ${DB_PASSWORD?}
+      TRACY_DEBUG: ${TRACY_DEBUG:-0}
+      ENVIRONMENT: ${ENVIRONMENT?}
+    command: [ 'bash', '-c', '[ -d "vendor" ] && php-fpm || composer install --no-interaction && php-fpm' ]
+    depends_on:
+      - database
+    volumes:
+      - ./backend:/var/www/html:rw,cached
+
+  database:
+    image: public.ecr.aws/docker/library/mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD?}
+      MYSQL_DATABASE: ${DB_NAME?}
+      MYSQL_USER: ${DB_USER?}
+      MYSQL_PASSWORD: ${DB_PASSWORD?}
+    ports:
+      - ${DATABASE_PORT:-3306}:3306
+    volumes:
+      - db-data:/var/lib/mysql
+
+  migration:
+    image: slim-app/backend:latest
+    environment:
+      DOCKER: 1
+      DB_HOST: database
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME?}
+      DB_USER: ${DB_USER?}
+      DB_PASSWORD: ${DB_PASSWORD?}
+    command: ["bash", "-c", "wait-for-it.sh database:3306 -- wait-for-it.sh backend:9000 -- vendor/bin/phinx migrate"]
+    depends_on:
+      - backend
+      - database
+    volumes:
+      - ./backend:/var/www/html
+
+  rabbitmq:
+    image: rabbitmq:4-management
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER?}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_USER_PSW?}
+    ports:
+      - ${RABBITMQ_PORT:-5672}:5672
+      - ${RABBITMQ_MANAGEMENT_PORT:-15672}:15672
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq/
+
+volumes:
+  db-data:
+  rabbitmq-data:
