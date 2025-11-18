@@ -10,18 +10,12 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 class UserController extends BaseController
 {
-    private ListUsersUseCase $listUsersUseCase;
-    private GetUserUseCase $getUserUseCase;
-    private CreateUserUseCase $createUserUseCase;
-    
+
     public function __construct(
-        ListUsersUseCase $listUsersUseCase,
-        GetUserUseCase $getUserUseCase,
-        CreateUserUseCase $createUserUseCase
+        private readonly ListUsersUseCase $listUsersUseCase,
+        private readonly GetUserUseCase $getUserUseCase,
+        private readonly CreateUserUseCase $createUserUseCase
     ) {
-        $this->listUsersUseCase = $listUsersUseCase;
-        $this->getUserUseCase = $getUserUseCase;
-        $this->createUserUseCase = $createUserUseCase;
     }
     
     /**

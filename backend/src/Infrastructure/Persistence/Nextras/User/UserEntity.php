@@ -2,17 +2,17 @@
 
 namespace App\Infrastructure\Persistence\Nextras\User;
 
-use DateTimeImmutable;
-use Nextras\Orm\Entity\Entity;
+use App\Infrastructure\Persistence\Nextras\BaseEntityWithTimestamps;
+use Nextras\Orm\Relationships\OneHasMany;
+use App\Infrastructure\Persistence\Nextras\Order\OrderEntity;
 
 /**
  * @property int         $id      {primary}
  * @property string      $name
  * @property string      $email
- * @property DateTimeImmutable $createdAt
- * @property DateTimeImmutable $updatedAt
+ * @property OneHasMany|OrderEntity[] $orders {1:m OrderEntity::$user}
  */
-class UserEntity extends Entity
+class UserEntity extends BaseEntityWithTimestamps
 {
 }
 

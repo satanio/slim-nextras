@@ -1,9 +1,20 @@
 <?php declare(strict_types=1);
 
+use App\Application\UseCases\AddProductToOrderUseCase;
+use App\Application\UseCases\ConfirmOrderUseCase;
+use App\Application\UseCases\CreateOrderUseCase;
 use App\Application\UseCases\CreateUserUseCase;
+use App\Application\UseCases\DeleteOrderUseCase;
+use App\Application\UseCases\GetOrderUseCase;
+use App\Application\UseCases\GetRandomProductUseCase;
 use App\Application\UseCases\GetUserUseCase;
 use App\Application\UseCases\ListUsersUseCase;
+use App\Application\UseCases\UpdateOrderItemUseCase;
+use App\Domain\Services\OrderServiceInterface;
+use App\Domain\Services\ProductServiceInterface;
 use App\Domain\Services\UserServiceInterface;
+use App\Interface\Http\Controllers\OrderController;
+use App\Interface\Http\Controllers\ProductController;
 use App\Interface\Http\Controllers\UserController;
 use DI\ContainerBuilder;
 use Nette\Caching\Cache;
@@ -16,8 +27,16 @@ use Nextras\Orm\Entity\Reflection\MetadataParserFactory;
 use Nette\Caching\Storages\DevNullStorage;
 use Nextras\Orm\Mapper\Dbal\DbalMapperCoordinator;
 use App\Infrastructure\Persistence\Nextras\Orm;
+use App\Infrastructure\Persistence\Nextras\Order\OrderMapper;
+use App\Infrastructure\Persistence\Nextras\Order\OrderRepository;
+use App\Infrastructure\Persistence\Nextras\OrderItem\OrderItemMapper;
+use App\Infrastructure\Persistence\Nextras\OrderItem\OrderItemRepository;
+use App\Infrastructure\Persistence\Nextras\Product\ProductMapper;
+use App\Infrastructure\Persistence\Nextras\Product\ProductRepository;
 use App\Infrastructure\Persistence\Nextras\User\UserMapper;
 use App\Infrastructure\Persistence\Nextras\User\UserRepository;
+use App\Infrastructure\Services\OrderService;
+use App\Infrastructure\Services\ProductService;
 use App\Infrastructure\Services\UserService;
 use function DI\autowire;
 use function DI\get;
@@ -56,10 +75,37 @@ $containerBuilder->addDefinitions([
             $c->get(Cache::class)
         );
     },
+    
+    ProductMapper::class => function(ContainerInterface $c) {
+        return new ProductMapper(
+            $c->get(Connection::class),
+            $c->get(DbalMapperCoordinator::class),
+            $c->get(Cache::class)
+        );
+    },
+    
+    OrderMapper::class => function(ContainerInterface $c) {
+        return new OrderMapper(
+            $c->get(Connection::class),
+            $c->get(DbalMapperCoordinator::class),
+            $c->get(Cache::class)
+        );
+    },
+    
+    OrderItemMapper::class => function(ContainerInterface $c) {
+        return new OrderItemMapper(
+            $c->get(Connection::class),
+            $c->get(DbalMapperCoordinator::class),
+            $c->get(Cache::class)
+        );
+    },
 
      Orm::class => function(ContainerInterface $c) {
          $repositories = [
              'users' => new UserRepository($c->get(UserMapper::class)),
+             'products' => new ProductRepository($c->get(ProductMapper::class)),
+             'orders' => new OrderRepository($c->get(OrderMapper::class)),
+             'orderItems' => new OrderItemRepository($c->get(OrderItemMapper::class)),
          ];
 
          $config = Model::getConfiguration($repositories);
@@ -78,18 +124,47 @@ $containerBuilder->addDefinitions([
     UserRepository::class => function(ContainerInterface $c) {
         return $c->get(Orm::class)->users;
     },
+    
+    ProductRepository::class => function(ContainerInterface $c) {
+        return $c->get(Orm::class)->products;
+    },
+    
+    OrderRepository::class => function(ContainerInterface $c) {
+        return $c->get(Orm::class)->orders;
+    },
+    
+    OrderItemRepository::class => function(ContainerInterface $c) {
+        return $c->get(Orm::class)->orderItems;
+    },
 
 
     UserService::class => autowire(),
     UserServiceInterface::class => get(UserService::class),
+    
+    ProductService::class => autowire(),
+    ProductServiceInterface::class => get(ProductService::class),
+    
+    OrderService::class => autowire(),
+    OrderServiceInterface::class => get(OrderService::class),
     
     // Use Cases
     CreateUserUseCase::class => autowire(),
     GetUserUseCase::class => autowire(),
     ListUsersUseCase::class => autowire(),
     
+    GetRandomProductUseCase::class => autowire(),
+    
+    CreateOrderUseCase::class => autowire(),
+    GetOrderUseCase::class => autowire(),
+    AddProductToOrderUseCase::class => autowire(),
+    UpdateOrderItemUseCase::class => autowire(),
+    ConfirmOrderUseCase::class => autowire(),
+    DeleteOrderUseCase::class => autowire(),
+    
     // Controllers
     UserController::class => autowire(),
+    ProductController::class => autowire(),
+    OrderController::class => autowire(),
 ]);
 
 return $containerBuilder->build();

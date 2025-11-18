@@ -16,6 +16,18 @@ if (!isset($_ENV['DOCKER'])) {
     $dotenv->safeLoad();
 }
 
+$credentials = [
+	'adapter' => 'mysql',
+	'host' => $_ENV['DB_HOST'] ?? 'localhost',
+	'port' => $_ENV['DB_PORT'] ?? 3306,
+	'name' => $_ENV['DB_NAME'] ?? 'slim_app',
+	'user' => $_ENV['DB_USER'] ?? 'root',
+	'pass' => $_ENV['DB_PASSWORD'] ?? '',
+	'charset' => $_ENV['DB_CHARSET'] ?? 'utf8mb4',
+	'collation' => 'utf8mb4_unicode_ci',
+];
+
+
 return [
     'paths' => [
         'migrations' => '%%PHINX_CONFIG_DIR%%/database/migrations',
@@ -24,27 +36,14 @@ return [
     'environments' => [
         'default_migration_table' => 'phinxlog',
         'default_environment' => 'development',
-        'development' => [
-            'adapter' => 'mysql',
-            'host' => $_ENV['DB_HOST'] ?? 'localhost',
-            'port' => $_ENV['DB_PORT'] ?? 3306,
-            'name' => $_ENV['DB_NAME'] ?? 'slim_app',
-            'user' => $_ENV['DB_USER'] ?? 'root',
-            'pass' => $_ENV['DB_PASSWORD'] ?? '',
-            'charset' => $_ENV['DB_CHARSET'] ?? 'utf8mb4',
-            'collation' => 'utf8mb4_unicode_ci',
-        ],
-        'production' => [
-            'adapter' => 'mysql',
-            'host' => $_ENV['DB_HOST'] ?? 'localhost',
-            'port' => $_ENV['DB_PORT'] ?? 3306,
-            'name' => $_ENV['DB_NAME'] ?? 'slim_app',
-            'user' => $_ENV['DB_USER'] ?? 'root',
-            'pass' => $_ENV['DB_PASSWORD'] ?? '',
-            'charset' => $_ENV['DB_CHARSET'] ?? 'utf8mb4',
-            'collation' => 'utf8mb4_unicode_ci',
-        ],
+        'development' => $credentials,
+        'production' => $credentials,
     ],
+	'feature_flags' => [
+		'unsigned_primary_keys'	=> false,
+		'column_null_default' => false,
+		'add_timestamps_use_datetime' => false,
+	],
     'version_order' => 'creation',
 ];
 
